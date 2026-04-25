@@ -1,0 +1,17 @@
+Name                              Stmts   Miss  Cover   Missing
+---------------------------------------------------------------
+app/__init__.py                       0      0   100%
+app/controller.py                    39      0   100%
+app/model/__init__.py                 0      0   100%
+app/model/bcd.py                     27      0   100%
+app/model/bits.py                    74      0   100%
+app/model/common.py                 104      0   100%
+app/model/ieee754.py                153     11    93%   86-90, 98-102, 123
+app/model/integer_arithmetic.py      73      6    92%   17-20, 45, 102
+app/model/integer_codes.py           91      4    96%   20, 25, 46, 53
+app/view/__init__.py                  0      0   100%
+app/view/main_window.py              91      0   100%
+---------------------------------------------------------------
+TOTAL                               652     21    97%
+
+Итоговое покрытие: 96.78%
