@@ -20,8 +20,7 @@
 
 ```bash
 # Клонирование репозитория
-git clone <repository-url>
-cd lab4
+git clone https://github.com/GlebMitko/aois/tree/main/lab4
 
 # Запуск программы
 python main.py

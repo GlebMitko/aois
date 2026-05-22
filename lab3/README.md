@@ -21,8 +21,7 @@
 
 ```bash
 # Клонирование репозитория
-git clone <repository-url>
-cd lab3
+git clone https://github.com/GlebMitko/aois/tree/main/lab3
 
 # Запуск программы
 python main.py
