@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project source="https://github.com/logisim-evolution/logisim-evolution" version="1.0">
+    <lib name="0" url="builtin/gates.xml"/>
+    <lib name="1" url="builtin/pins.xml"/>
+    <lib name="2" url="builtin/memory.xml"/>
+    <main name="main"/>
+    <circuit name="UpCounter8">
+        <info>
+        СЧЕТЧИК НАКАПЛИВАЮЩЕГО ТИПА НА 8 СОСТОЯНИЙ
+        Т-триггеры, базис НЕ-И-ИЛИ
+
+        СОСТОЯНИЯ: 000 -&gt; 001 -&gt; 010 -&gt; 011 -&gt; 100 -&gt; 101 -&gt; 110 -&gt; 111 -&gt; 000
+
+        ФУНКЦИИ ВОЗБУЖДЕНИЯ (СДНФ):
+
+        T2 = !Q2&amp;Q1&amp;Q0 | Q2&amp;Q1&amp;Q0
+        T1 = !Q2&amp;!Q1&amp;Q0 | !Q2&amp;Q1&amp;Q0 | Q2&amp;!Q1&amp;Q0 | Q2&amp;Q1&amp;Q0
+        T0 = !Q2&amp;!Q1&amp;!Q0 | !Q2&amp;!Q1&amp;Q0 | !Q2&amp;Q1&amp;!Q0 | !Q2&amp;Q1&amp;Q0 | Q2&amp;!Q1&amp;!Q0 | Q2&amp;!Q1&amp;Q0 | Q2&amp;Q1&amp;!Q0 | Q2&amp;Q1&amp;Q0
+
+        ФУНКЦИИ ВОЗБУЖДЕНИЯ (базис НЕ-И-ИЛИ):
+
+        T2 = !(!(!Q2&amp;Q1&amp;Q0) &amp; !(Q2&amp;Q1&amp;Q0))
+        T1 = !(!(!Q2&amp;!Q1&amp;Q0) &amp; !(!Q2&amp;Q1&amp;Q0) &amp; !(Q2&amp;!Q1&amp;Q0) &amp; !(Q2&amp;Q1&amp;Q0))
+        T0 = !(!(!Q2&amp;!Q1&amp;!Q0) &amp; !(!Q2&amp;!Q1&amp;Q0) &amp; !(!Q2&amp;Q1&amp;!Q0) &amp; !(!Q2&amp;Q1&amp;Q0) &amp; !(Q2&amp;!Q1&amp;!Q0) &amp; !(Q2&amp;!Q1&amp;Q0) &amp; !(Q2&amp;Q1&amp;!Q0) &amp; !(Q2&amp;Q1&amp;Q0))
+
+        ПОСТРОЕНИЕ В LOGISIM:
+
+        1. Добавить 3 T-триггера (Memory -&gt; T Flip-Flop)
+        2. Выходы Q2,Q1,Q0 подать на комбинационную схему
+        3. Комбинационная схема вычисляет T2,T1,T0 по формулам выше
+        4. Выходы T подать на входы T триггеров
+        5. Подать тактовый сигнал (Clock) на все триггеры
+        6. Начальное состояние: 000
+        </info>
+    </circuit>
+</project>
