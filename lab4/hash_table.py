@@ -1,8 +1,11 @@
 # hash_table.py
-"""Хеш-таблица с линейным разрешением коллизий (линейный поиск)"""
+"""Хеш-таблица с линейным разрешением коллизий"""
 
 from typing import Any, Optional, List, Dict, Tuple
 from hash_function import calculate_v, hash_function
+
+# Константа шага пробинга (для линейного разрешения коллизий)
+PROBE_STEP = 1
 
 
 class HashTableEntry:
@@ -54,7 +57,7 @@ class HashTable:
     Хеш-таблица с линейным разрешением коллизий (линейный пробинг)
 
     При коллизии: последовательный поиск следующей свободной ячейки
-    (index + 1) % size
+    (index + PROBE_STEP) % size
     """
 
     def __init__(self, size: int = 20, base: int = 0):
@@ -74,11 +77,11 @@ class HashTable:
 
     def _linear_probe(self, start_index: int) -> int:
         """
-        Линейный пробинг: поиск следующей свободной ячейки
+        Линейный пробинг с шагом PROBE_STEP
         Возвращает индекс свободной ячейки или -1 если таблица заполнена
         """
         for i in range(self.size):
-            idx = (start_index + i) % self.size
+            idx = (start_index + i * PROBE_STEP) % self.size
             entry = self.table[idx]
             if entry is None or entry.u == 0 or entry.d:
                 return idx
@@ -242,6 +245,7 @@ class HashTable:
         print(f"Всего записей: {self.entries_count}/{self.size}")
         print(f"Коллизий: {self.collisions_count}")
         print(f"Коэффициент заполнения: {fill_ratio:.1f}%")
+        print(f"Шаг пробинга: {PROBE_STEP}")
 
     def show_v_h_table(self):
         """Показывает вычисленные значения V и h для всех записей"""
@@ -262,6 +266,7 @@ class HashTable:
         print(f"Заполнено: {self.entries_count}")
         print(f"Свободно: {self.size - self.entries_count}")
         print(f"Коллизий: {self.collisions_count}")
+        print(f"Шаг пробинга: {PROBE_STEP}")
 
     def get_all_entries(self) -> List[Dict]:
         """Возвращает все записи для отображения"""
