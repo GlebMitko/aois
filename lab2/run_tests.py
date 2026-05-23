@@ -20,7 +20,7 @@ def run_tests_with_coverage():
                 'run_tests.py',
                 'test_functions.py',
                 'interactive.py',
-                'main.py',  # Исключаем main.py
+                'main.py',
                 '*/__pycache__/*',
                 '*/.pytest_cache/*',
                 'show_coverage.py'
@@ -34,7 +34,8 @@ def run_tests_with_coverage():
         start_dir = os.path.join(os.path.dirname(__file__), 'tests')
         suite = loader.discover(start_dir, pattern='test_*.py')
 
-        runner = unittest.TextTestRunner(verbosity=1)
+        # Запускаем с verbosity=2 для детального вывода
+        runner = unittest.TextTestRunner(verbosity=2)
         result = runner.run(suite)
 
         cov.stop()
@@ -47,6 +48,33 @@ def run_tests_with_coverage():
         print(f"Успешно: {result.testsRun - len(result.failures) - len(result.errors)}")
         print(f"Ошибок: {len(result.errors)}")
         print(f"Провалено: {len(result.failures)}")
+
+        # Вывод списка проваленных тестов
+        if result.failures:
+            print("\n" + "-" * 70)
+            print("❌ ПРОВАЛЕННЫЕ ТЕСТЫ:")
+            print("-" * 70)
+            for i, (test, traceback) in enumerate(result.failures, 1):
+                print(f"\n{i}. {test}")
+                print(f"   Ошибка: {traceback.split('AssertionError:')[-1].strip() if 'AssertionError' in traceback else traceback[:200]}")
+
+        # Вывод списка тестов с ошибками
+        if result.errors:
+            print("\n" + "-" * 70)
+            print("⚠️ ТЕСТЫ С ОШИБКАМИ:")
+            print("-" * 70)
+            for i, (test, traceback) in enumerate(result.errors, 1):
+                print(f"\n{i}. {test}")
+                error_msg = traceback.split('Error:')[-1].strip() if 'Error:' in traceback else traceback[:200]
+                print(f"   Ошибка: {error_msg}")
+
+        # Общий вердикт
+        print("\n" + "=" * 70)
+        if result.wasSuccessful():
+            print("✅ ВСЕ ТЕСТЫ ПРОШЛИ УСПЕШНО")
+        else:
+            print("❌ ЕСТЬ ПРОБЛЕМЫ В ТЕСТАХ")
+        print("=" * 70)
 
         print("\n" + "=" * 70)
         print("ОТЧЕТ О ПОКРЫТИИ КОДА")
@@ -64,18 +92,34 @@ def run_tests_with_coverage():
 
         cov.html_report(directory='htmlcov')
         print("\n📊 HTML отчет создан в папке 'htmlcov'")
+        print("   Откройте htmlcov/index.html в браузере")
 
         return result.wasSuccessful()
 
     except ImportError:
         print("❌ Библиотека 'coverage' не установлена.")
         print("   Установите ее: pip install coverage")
+        print("\nЗапуск тестов без измерения покрытия...\n")
 
         loader = unittest.TestLoader()
         start_dir = os.path.join(os.path.dirname(__file__), 'tests')
         suite = loader.discover(start_dir, pattern='test_*.py')
         runner = unittest.TextTestRunner(verbosity=2)
         result = runner.run(suite)
+
+        # Вывод статистики даже без coverage
+        print("\n" + "=" * 70)
+        print("СТАТИСТИКА ТЕСТОВ")
+        print("=" * 70)
+        print(f"Выполнено тестов: {result.testsRun}")
+        print(f"Успешно: {result.testsRun - len(result.failures) - len(result.errors)}")
+        print(f"Ошибок: {len(result.errors)}")
+        print(f"Провалено: {len(result.failures)}")
+
+        if result.wasSuccessful():
+            print("\n✅ ВСЕ ТЕСТЫ ПРОШЛИ УСПЕШНО")
+        else:
+            print("\n❌ ЕСТЬ ПРОБЛЕМЫ В ТЕСТАХ")
 
         return result.wasSuccessful()
 

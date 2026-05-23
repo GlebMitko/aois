@@ -1,5 +1,5 @@
 # main.py
-"""Главный модуль лабораторной работы 2"""
+"""Лабораторная работа 2 - Построение СКНФ и СДНФ на основании таблиц истинности"""
 
 import sys
 import re
@@ -15,8 +15,7 @@ from minimization_karnaugh import KarnaughMap
 
 
 def extract_variables(expression: str) -> list:
-    """Извлекает все переменные из выражения"""
-    # Находим все буквы (a-e) и возвращаем уникальные отсортированные
+    """Извлекает все переменные из выражения (a, b, c, d, e)"""
     variables = sorted(set(re.findall(r'[a-e]', expression)))
     return variables
 
@@ -24,7 +23,8 @@ def extract_variables(expression: str) -> list:
 def print_menu():
     """Выводит меню программы"""
     print("\n" + "=" * 70)
-    print("ЛАБОРАТОРНАЯ РАБОТА 2: ПОСТРОЕНИЕ СКНФ И СДНФ")
+    print("ЛАБОРАТОРНАЯ РАБОТА 2")
+    print("ПОСТРОЕНИЕ СКНФ И СДНФ НА ОСНОВАНИИ ТАБЛИЦ ИСТИННОСТИ")
     print("=" * 70)
     print("\nПоддерживаемые операции:")
     print("  & - конъюнкция (И)")
@@ -43,7 +43,7 @@ def print_menu():
 
 
 class Lab2:
-    """Основной класс лабораторной работы"""
+    """Основной класс лабораторной работы 2"""
 
     def __init__(self, expression: str, variables: list = None):
         """
@@ -55,7 +55,7 @@ class Lab2:
         """
         self.expression = expression
 
-        # Автоматическое определение переменных
+        # Автоматическое определение переменных если не указаны
         if variables is None:
             variables = extract_variables(expression)
 
@@ -69,6 +69,7 @@ class Lab2:
         self.variables = variables
         print(f"\nОпределены переменные: {', '.join(self.variables)}")
 
+        # Создаем все необходимые объекты
         self.parser = LogicParser(expression, variables)
         self.tt = TruthTable(self.parser)
         self.nf = NormalForms(self.tt)
@@ -76,66 +77,117 @@ class Lab2:
         self.zheg = ZhegalkinPolynomial(self.tt)
         self.fict = FictitiousVariables(self.tt)
         self.diff = BooleanDifferentiation(self.tt)
-        self.min = Minimization(self.tt)
+        self.minim = Minimization(self.tt)
         self.karnaugh = KarnaughMap(self.tt)
 
-    def run_all(self):
-        """Выполняет все задачи лабораторной работы"""
-        print("=" * 70)
-        print(f"ЛАБОРАТОРНАЯ РАБОТА 2")
-        print(f"Исходная функция: {self.expression}")
-        print(f"Переменные: {', '.join(self.variables)}")
-        print("=" * 70)
-
-        # 1. Таблица истинности
+    def print_table(self):
+        """Вывод таблицы истинности"""
         self.tt.print_table()
 
-        # 2. СДНФ и СКНФ
+    def print_normal_forms(self):
+        """Вывод нормальных форм"""
         print("\n" + "=" * 60)
         print("НОРМАЛЬНЫЕ ФОРМЫ")
         print("=" * 60)
         print(f"СДНФ: {self.nf.build_sdnf()}")
         print(f"СКНФ: {self.nf.build_sknf()}")
 
-        # 3. Числовые формы
+    def print_numeric_forms(self):
+        """Вывод числовых форм"""
         print(f"\nЧисловая форма СДНФ: {self.nf.get_numeric_form_sdnf()}")
         print(f"Числовая форма СКНФ: {self.nf.get_numeric_form_sknf()}")
 
-        # 4. Индексная форма
+    def print_index_form(self):
+        """Вывод индексной формы"""
         print(f"\nИндексная форма: {self.nf.get_index_form()}")
 
-        # 5. Классы Поста
+    def print_post_classes(self):
+        """Вывод классов Поста"""
         self.post.print_classes()
 
-        # 6. Полином Жегалкина
+    def print_zhegalkin(self):
+        """Вывод полинома Жегалкина"""
         self.zheg.print_polynomial()
 
-        # 7. Фиктивные переменные
+    def print_fictitious(self):
+        """Вывод фиктивных переменных"""
         self.fict.print_result()
 
+    def print_derivatives(self):
+        """Вывод булевой дифференциации"""
+        self.diff.print_derivatives()
+
+    def print_minimization_dnf_calculus(self):
+        """Минимизация ДНФ расчетным методом"""
+        self.minim.print_minimization_dnf_calculus()
+
+    def print_minimization_dnf_table(self):
+        """Минимизация ДНФ расчетно-табличным методом"""
+        self.minim.print_minimization_dnf_table()
+
+    def print_minimization_cnf_calculus(self):
+        """Минимизация КНФ расчетным методом"""
+        self.minim.print_minimization_cnf_calculus()
+
+    def print_minimization_cnf_table(self):
+        """Минимизация КНФ расчетно-табличным методом"""
+        self.minim.print_minimization_cnf_table()
+
+    def print_karnaugh_dnf(self):
+        """Минимизация ДНФ картами Карно"""
+        self.karnaugh.print_karnaugh_dnf()
+
+    def print_karnaugh_cnf(self):
+        """Минимизация КНФ картами Карно"""
+        self.karnaugh.print_karnaugh_cnf()
+
+    def run_all(self):
+        """Выполняет все задачи лабораторной работы"""
+        print("\n" + "=" * 70)
+        print(f"АНАЛИЗ ФУНКЦИИ: {self.expression}")
+        print("=" * 70)
+
+        # 1. Таблица истинности
+        self.print_table()
+
+        # 2. СДНФ и СКНФ
+        self.print_normal_forms()
+
+        # 3. Числовые формы
+        self.print_numeric_forms()
+
+        # 4. Индексная форма
+        self.print_index_form()
+
+        # 5. Классы Поста
+        self.print_post_classes()
+
+        # 6. Полином Жегалкина
+        self.print_zhegalkin()
+
+        # 7. Фиктивные переменные
+        self.print_fictitious()
+
         # 8. Булева дифференциация
-        try:
-            self.diff.print_derivatives(max_vars=min(4, len(self.variables)))
-        except Exception as e:
-            print(f"\nОшибка при вычислении производных: {e}")
+        self.print_derivatives()
 
-        # 9. Минимизация ДНФ расчетным методом
-        try:
-            self.min.print_minimization_dnf()
-        except Exception as e:
-            print(f"\nОшибка при минимизации ДНФ: {e}")
+        # 9. Минимизация ДНФ (расчетный метод)
+        self.print_minimization_dnf_calculus()
 
-        # 10. Минимизация ДНФ расчетно-табличным методом
-        try:
-            self.min.print_minimization_dnf_table()
-        except Exception as e:
-            print(f"\nОшибка при расчетно-табличной минимизации: {e}")
+        # 10. Минимизация ДНФ (расчетно-табличный метод)
+        self.print_minimization_dnf_table()
 
-        # 11. Минимизация картами Карно
-        try:
-            self.karnaugh.print_karnaugh_dnf()
-        except Exception as e:
-            print(f"\nОшибка при минимизации картами Карно: {e}")
+        # 11. Минимизация ДНФ (карты Карно)
+        self.print_karnaugh_dnf()
+
+        # 12. Минимизация КНФ (расчетный метод)
+        self.print_minimization_cnf_calculus()
+
+        # 13. Минимизация КНФ (расчетно-табличный метод)
+        self.print_minimization_cnf_table()
+
+        # 14. Минимизация КНФ (карты Карно)
+        self.print_karnaugh_cnf()
 
         print("\n" + "=" * 70)
         print("АНАЛИЗ ФУНКЦИИ ЗАВЕРШЕН")
@@ -143,7 +195,7 @@ class Lab2:
 
 
 def main():
-    """Точка входа с циклом"""
+    """Главная функция с циклом"""
     print_menu()
 
     while True:
@@ -153,12 +205,10 @@ def main():
 
         # Получаем функцию от пользователя
         if len(sys.argv) > 1 and not hasattr(main, 'args_processed'):
-            # Если передан аргумент командной строки при первом запуске
             expression = ' '.join(sys.argv[1:])
             print(f"\nФункция из аргумента: {expression}")
             main.args_processed = True
         else:
-            # Запрашиваем ввод от пользователя
             print("\nВведите логическую функцию (или 'exit' для выхода, 'help' для справки):")
             user_input = input(">>> ").strip()
 
@@ -183,6 +233,8 @@ def main():
             lab.run_all()
         except Exception as e:
             print(f"\n❌ ОШИБКА: {e}")
+            import traceback
+            traceback.print_exc()
             print("\nПопробуйте другой формат функции.")
             print("Убедитесь, что:")
             print("  - Используются только переменные a, b, c, d, e")
@@ -196,6 +248,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # Сбрасываем флаг обработки аргументов
     main.args_processed = False
     main()

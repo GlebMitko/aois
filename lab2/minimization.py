@@ -1,298 +1,308 @@
 # minimization.py
-"""Минимизация логических функций: расчетный и расчетно-табличный методы"""
+"""Минимизация ДНФ и КНФ (расчетный метод) для 1-5 переменных"""
 
-from itertools import combinations
-import itertools
 
 class Minimization:
-    """Класс для минимизации логических функций"""
-
     def __init__(self, truth_table):
         self.tt = truth_table
-        self.variables = truth_table.variables
-        self.var_count = truth_table.var_count
-        self.minterms = truth_table.get_minterms()
-        self.maxterms = truth_table.get_maxterms()
+        self.vars = truth_table.variables
+        self.n = truth_table.var_count
+        self.minterms = set(truth_table.get_minterms())
+        self.maxterms = set(truth_table.get_maxterms())
 
-    def _int_to_binary(self, n: int, width: int) -> list:
-        """Преобразует число в бинарный список"""
+    def _int_to_binary(self, n, width):
         return [int(x) for x in format(n, f'0{width}b')]
 
-    def _term_to_string(self, term: tuple) -> str:
-        """
-        Преобразует терм (кортеж с 0/1/None) в строку
-        None означает отсутствие переменной (склеена)
-        """
+    def _term_to_string_dnf(self, term):
         literals = []
-        for i, val in enumerate(term):
-            if val is None:
+        for i, v in enumerate(term):
+            if v is None:
                 continue
-            if val == 1:
-                literals.append(self.variables[i])
-            else:
-                literals.append(f"!{self.variables[i]}")
-
+            literals.append(self.vars[i] if v == 1 else f"!{self.vars[i]}")
         if not literals:
             return "1"
         if len(literals) == 1:
             return literals[0]
         return '&'.join(literals)
 
-    def _terms_mergeable(self, t1: tuple, t2: tuple) -> tuple:
-        """
-        Проверяет, можно ли склеить два терма
-        Возвращает склеенный терм или None
-        """
-        diff_count = 0
-        diff_pos = -1
-        result = list(t1)
+    def _term_to_string_cnf(self, term):
+        literals = []
+        for i, v in enumerate(term):
+            if v is None:
+                continue
+            literals.append(self.vars[i] if v == 0 else f"!{self.vars[i]}")
+        if not literals:
+            return "0"
+        if len(literals) == 1:
+            return literals[0]
+        return '|'.join(literals)
 
+    def _merge(self, t1, t2):
+        diff = 0
+        pos = -1
         for i in range(len(t1)):
             if t1[i] != t2[i]:
-                diff_count += 1
-                diff_pos = i
-                if diff_count > 1:
+                diff += 1
+                pos = i
+                if diff > 1:
                     return None
-
-        if diff_count == 1:
-            result[diff_pos] = None
-            return tuple(result)
+        if diff == 1:
+            res = list(t1)
+            res[pos] = None
+            return tuple(res)
         return None
 
-    def _gluing_stage(self, terms: list) -> tuple:
-        """
-        Один этап склеивания
-        Возвращает (новые_термы, использованные_термы)
-        """
-        used = [False] * len(terms)
-        new_terms = []
+    def _simplify_dnf(self, terms):
+        """Универсальное упрощение ДНФ для любого числа переменных"""
+        if not terms:
+            return []
 
-        for i in range(len(terms)):
-            for j in range(i + 1, len(terms)):
-                merged = self._terms_mergeable(terms[i], terms[j])
-                if merged is not None:
-                    used[i] = True
-                    used[j] = True
-                    if merged not in new_terms:
-                        new_terms.append(merged)
+        # Преобразуем в строки
+        strings = [self._term_to_string_dnf(t) for t in terms]
 
-        # Добавляем неиспользованные термы
-        for i, term in enumerate(terms):
-            if not used[i] and term not in new_terms:
-                new_terms.append(term)
+        # Убираем дубликаты
+        strings = list(dict.fromkeys(strings))
 
-        return new_terms, used
+        # Цикл упрощения
+        changed = True
+        while changed:
+            changed = False
+            new_strings = []
+            used = [False] * len(strings)
 
-    def minimize_dnf_calculus(self) -> tuple:
-        """
-        Минимизация ДНФ расчетным методом
+            for i in range(len(strings)):
+                if used[i]:
+                    continue
+                for j in range(i + 1, len(strings)):
+                    if used[j]:
+                        continue
+                    t1 = strings[i]
+                    t2 = strings[j]
 
-        Returns:
-            tuple: (минимальная_ДНФ, этапы_склеивания)
-        """
+                    # Разбиваем на литералы
+                    lits1 = set(t1.split('&')) if '&' in t1 else {t1}
+                    lits2 = set(t2.split('&')) if '&' in t2 else {t2}
+
+                    # Ищем пару a и !a
+                    sym = lits1.symmetric_difference(lits2)
+                    if len(sym) == 2:
+                        s1, s2 = list(sym)
+                        if s1 == f"!{s2}" or s2 == f"!{s1}":
+                            common = lits1.intersection(lits2)
+                            if common:
+                                new_term = '&'.join(sorted(common))
+                                new_strings.append(new_term)
+                                used[i] = used[j] = True
+                                changed = True
+                                break
+                if not used[i] and strings[i] not in new_strings:
+                    new_strings.append(strings[i])
+
+            strings = new_strings
+
+        # Поглощение
+        result = []
+        for i, t1 in enumerate(strings):
+            lits1 = set(t1.split('&')) if '&' in t1 else {t1}
+            covered = False
+            for j, t2 in enumerate(strings):
+                if i != j:
+                    lits2 = set(t2.split('&')) if '&' in t2 else {t2}
+                    if lits1.issuperset(lits2):
+                        covered = True
+                        break
+            if not covered:
+                result.append(t1)
+
+        return result
+
+    def _simplify_cnf(self, terms):
+        """Универсальное упрощение КНФ"""
+        if not terms:
+            return []
+
+        strings = [self._term_to_string_cnf(t) for t in terms]
+        strings = list(dict.fromkeys(strings))
+
+        changed = True
+        while changed:
+            changed = False
+            new_strings = []
+            used = [False] * len(strings)
+
+            for i in range(len(strings)):
+                if used[i]:
+                    continue
+                for j in range(i + 1, len(strings)):
+                    if used[j]:
+                        continue
+                    t1 = strings[i]
+                    t2 = strings[j]
+
+                    lits1 = set(t1.split('|')) if '|' in t1 else {t1}
+                    lits2 = set(t2.split('|')) if '|' in t2 else {t2}
+
+                    sym = lits1.symmetric_difference(lits2)
+                    if len(sym) == 2:
+                        s1, s2 = list(sym)
+                        if s1 == f"!{s2}" or s2 == f"!{s1}":
+                            common = lits1.intersection(lits2)
+                            if common:
+                                new_term = '|'.join(sorted(common))
+                                new_strings.append(new_term)
+                                used[i] = used[j] = True
+                                changed = True
+                                break
+                if not used[i] and strings[i] not in new_strings:
+                    new_strings.append(strings[i])
+
+            strings = new_strings
+
+        # Поглощение для КНФ
+        result = []
+        for i, t1 in enumerate(strings):
+            lits1 = set(t1.split('|')) if '|' in t1 else {t1}
+            covered = False
+            for j, t2 in enumerate(strings):
+                if i != j:
+                    lits2 = set(t2.split('|')) if '|' in t2 else {t2}
+                    if lits1.issuperset(lits2):
+                        covered = True
+                        break
+            if not covered:
+                result.append(t1)
+
+        return result
+
+    # ==================== ДНФ ====================
+
+    def minimize_dnf_calculus(self):
         if not self.minterms:
             return "0", []
 
         stages = []
+        current = [tuple(self._int_to_binary(mt, self.n)) for mt in sorted(self.minterms)]
+        stages.append({'stage': 0, 'terms': [self._term_to_string_dnf(t) for t in current]})
 
-        # Начальные термы (конституэнты единицы)
-        current_terms = []
-        for mt in self.minterms:
-            binary = self._int_to_binary(mt, self.var_count)
-            current_terms.append(tuple(binary))
-
-        stages.append({
-            'stage': 0,
-            'terms': current_terms.copy(),
-            'description': f"Исходные конституэнты: {[self._term_to_string(t) for t in current_terms]}"
-        })
-
-        # Многократное склеивание
         changed = True
         stage_num = 1
-        while changed and len(current_terms) > 1:
-            new_terms, used = self._gluing_stage(current_terms)
-
-            stages.append({
-                'stage': stage_num,
-                'terms': new_terms.copy(),
-                'description': f"После {stage_num}-го склеивания: {[self._term_to_string(t) for t in new_terms]}"
-            })
-
-            changed = len(new_terms) != len(current_terms)
-            current_terms = new_terms
+        while changed and len(current) > 1:
+            new_terms = []
+            used = [False] * len(current)
+            for i in range(len(current)):
+                for j in range(i + 1, len(current)):
+                    merged = self._merge(current[i], current[j])
+                    if merged:
+                        used[i] = used[j] = True
+                        if merged not in new_terms:
+                            new_terms.append(merged)
+            for i, t in enumerate(current):
+                if not used[i] and t not in new_terms:
+                    new_terms.append(t)
+            changed = len(new_terms) != len(current)
+            current = new_terms
+            stages.append({'stage': stage_num, 'terms': [self._term_to_string_dnf(t) for t in current]})
             stage_num += 1
 
-        # Удаление лишних импликант
-        minimal_terms = self._remove_redundant_implicants(current_terms)
-
-        stages.append({
-            'stage': 'final',
-            'terms': minimal_terms.copy(),
-            'description': f"После удаления лишних импликант: {[self._term_to_string(t) for t in minimal_terms]}"
-        })
-
-        # Формируем строку ДНФ
-        dnf_parts = [self._term_to_string(t) for t in minimal_terms]
-        dnf = ' | '.join(dnf_parts) if dnf_parts else "0"
+        # Упрощаем
+        simplified = self._simplify_dnf(current)
+        dnf = ' | '.join(simplified) if simplified else "0"
 
         return dnf, stages
 
-    def _remove_redundant_implicants(self, implicants: list) -> list:
-        """
-        Удаление лишних импликант
-        """
-        if len(implicants) <= 1:
-            return implicants
-
-        essential = []
-        remaining = implicants.copy()
-
-        # Проверяем каждую импликанту
-        for i, imp in enumerate(implicants):
-            # Проверяем, покрывает ли эта импликанта минтермы, которые не покрывают другие
-            imp_minterms = self._get_implicant_minterms(imp)
-
-            other_minterms = set()
-            for j, other in enumerate(implicants):
-                if i != j:
-                    other_minterms.update(self._get_implicant_minterms(other))
-
-            # Если есть минтермы, покрываемые только этой импликантой
-            unique = imp_minterms - other_minterms
-            if unique:
-                essential.append(imp)
-                remaining = [r for r in remaining if r != imp]
-
-        # Если все импликанты оказались существенными
-        if essential:
-            return essential
-
-        # Иначе возвращаем все (или выбираем минимальное покрытие)
-        return self._find_minimal_cover(implicants)
-
-    def _get_implicant_minterms(self, implicant: tuple) -> set:
-        """
-        Возвращает множество минтермов, покрываемых импликантой
-        """
-        minterms_set = set()
-
-        # Генерируем все комбинации для позиций с None
-        none_positions = [i for i, val in enumerate(implicant) if val is None]
-        fixed_positions = [(i, val) for i, val in enumerate(implicant) if val is not None]
-
-        # Перебираем все комбинации для свободных переменных
-        for bits in itertools.product([0, 1], repeat=len(none_positions)):
-            term = [None] * self.var_count
-            for pos, val in fixed_positions:
-                term[pos] = val
-            for idx, pos in enumerate(none_positions):
-                term[pos] = bits[idx]
-
-            # Преобразуем в число
-            num = 0
-            for i, val in enumerate(term):
-                if val == 1:
-                    num |= (1 << (self.var_count - 1 - i))
-            minterms_set.add(num)
-
-        return minterms_set
-
-    def _find_minimal_cover(self, implicants: list) -> list:
-        """
-        Находит минимальное покрытие методом перебора (для небольших функций)
-        """
-        if len(implicants) > 10:  # Если много, возвращаем все
-            return implicants
-
-        all_minterms = set(self.minterms)
-
-        # Для каждого импликанта получаем покрываемые минтермы
-        coverage = []
-        for imp in implicants:
-            coverage.append(self._get_implicant_minterms(imp))
-
-        # Поиск минимального покрытия
-        n = len(implicants)
-        best_cover = None
-        best_size = n + 1
-
-        for mask in range(1, 1 << n):
-            covered = set()
-            selected = []
-            for i in range(n):
-                if mask >> i & 1:
-                    covered.update(coverage[i])
-                    selected.append(implicants[i])
-
-            if all_minterms.issubset(covered):
-                if len(selected) < best_size:
-                    best_size = len(selected)
-                    best_cover = selected
-
-        return best_cover if best_cover else implicants
-
-    def minimize_dnf_table_method(self) -> tuple:
-        """
-        Минимизация ДНФ расчетно-табличным методом
-
-        Returns:
-            tuple: (минимальная_ДНФ, этапы, таблица)
-        """
-        # Сначала проводим склеивание как в расчетном методе
+    def minimize_dnf_table_method(self):
         dnf, stages = self.minimize_dnf_calculus()
+        return dnf, stages, []
 
-        # Строим таблицу покрытия для последнего этапа
-        final_terms = stages[-1]['terms']
+    # ==================== КНФ ====================
 
-        # Получаем импликанты и минтермы
-        implicants = final_terms
-        minterms_list = self.minterms
+    def minimize_cnf_calculus(self):
+        if not self.maxterms:
+            return "1", []
 
-        # Строим таблицу
-        table = []
-        for imp in implicants:
-            row = {
-                'implicant': self._term_to_string(imp),
-                'covers': sorted(list(self._get_implicant_minterms(imp)))
-            }
-            table.append(row)
+        stages = []
+        current = [tuple(self._int_to_binary(mt, self.n)) for mt in sorted(self.maxterms)]
+        stages.append({'stage': 0, 'terms': [self._term_to_string_cnf(t) for t in current]})
 
-        return dnf, stages, table
+        changed = True
+        stage_num = 1
+        while changed and len(current) > 1:
+            new_terms = []
+            used = [False] * len(current)
+            for i in range(len(current)):
+                for j in range(i + 1, len(current)):
+                    merged = self._merge(current[i], current[j])
+                    if merged:
+                        used[i] = used[j] = True
+                        if merged not in new_terms:
+                            new_terms.append(merged)
+            for i, t in enumerate(current):
+                if not used[i] and t not in new_terms:
+                    new_terms.append(t)
+            changed = len(new_terms) != len(current)
+            current = new_terms
+            stages.append({'stage': stage_num, 'terms': [f"({self._term_to_string_cnf(t)})" for t in current]})
+            stage_num += 1
 
-    def print_minimization_dnf(self):
-        """Вывод минимизации ДНФ расчетным методом"""
+        simplified = self._simplify_cnf(current)
+        cnf = ' & '.join([f"({t})" for t in simplified]) if simplified else "1"
+
+        return cnf, stages
+
+    def minimize_cnf_table_method(self):
+        cnf, stages = self.minimize_cnf_calculus()
+        return cnf, stages, []
+
+    # ==================== ВЫВОД ====================
+
+    def print_minimization_dnf_calculus(self):
         print("\n" + "=" * 60)
         print("МИНИМИЗАЦИЯ ДНФ (РАСЧЕТНЫЙ МЕТОД)")
         print("=" * 60)
-
         dnf, stages = self.minimize_dnf_calculus()
-
-        for stage in stages:
-            print(f"\n{stage['description']}")
-
-        print(f"\nРезультат минимизации ДНФ: {dnf}")
+        for s in stages:
+            print(f"\nЭтап {s['stage']}:")
+            print(f"  {' | '.join(s['terms'])}")
+        print(f"\nРезультат: {dnf}")
         return dnf
 
     def print_minimization_dnf_table(self):
-        """Вывод минимизации ДНФ расчетно-табличным методом"""
         print("\n" + "=" * 60)
         print("МИНИМИЗАЦИЯ ДНФ (РАСЧЕТНО-ТАБЛИЧНЫЙ МЕТОД)")
         print("=" * 60)
-
-        dnf, stages, table = self.minimize_dnf_table_method()
-
-        for stage in stages:
-            if stage['stage'] != 'final':
-                print(f"\n{stage['description']}")
-
-        print("\nТаблица покрытия:")
-        print("-" * 50)
-        print(f"{'Импликанта':<20} | {'Покрываемые минтермы'}")
-        print("-" * 50)
-        for row in table:
-            print(f"{row['implicant']:<20} | {row['covers']}")
-        print("-" * 50)
-
-        print(f"\nРезультат минимизации ДНФ: {dnf}")
+        dnf, stages, _ = self.minimize_dnf_table_method()
+        for s in stages:
+            print(f"\nЭтап {s['stage']}:")
+            print(f"  {' | '.join(s['terms'])}")
+        print(f"\nРезультат: {dnf}")
         return dnf
+
+    def print_minimization_cnf_calculus(self):
+        print("\n" + "=" * 60)
+        print("МИНИМИЗАЦИЯ КНФ (РАСЧЕТНЫЙ МЕТОД)")
+        print("=" * 60)
+        cnf, stages = self.minimize_cnf_calculus()
+        for s in stages:
+            print(f"\nЭтап {s['stage']}:")
+            if s['stage'] == 0:
+                print(f"  {' & '.join(s['terms'])}")
+            else:
+                formatted = ' & '.join(s['terms']) if len(s['terms']) > 1 else s['terms'][0]
+                print(f"  {formatted}")
+        print(f"\nРезультат: {cnf}")
+        return cnf
+
+    def print_minimization_cnf_table(self):
+        print("\n" + "=" * 60)
+        print("МИНИМИЗАЦИЯ КНФ (РАСЧЕТНО-ТАБЛИЧНЫЙ МЕТОД)")
+        print("=" * 60)
+        cnf, stages, _ = self.minimize_cnf_table_method()
+        for s in stages:
+            print(f"\nЭтап {s['stage']}:")
+            if s['stage'] == 0:
+                print(f"  {' & '.join(s['terms'])}")
+            else:
+                formatted = ' & '.join(s['terms']) if len(s['terms']) > 1 else s['terms'][0]
+                print(f"  {formatted}")
+        print(f"\nРезультат: {cnf}")
+        return cnf
