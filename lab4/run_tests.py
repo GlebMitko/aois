@@ -51,7 +51,7 @@ def run_tests():
 
         print(f"\n{'=' * 60}")
         if total >= 90:
-            print(f"✅ ПОКРЫТИЕ {total:.1f}% - ЦЕЛЬ ДОСТИГНУТА (>=90%)")
+            print(f" ПОКРЫТИЕ {total:.1f}% ")
         else:
             print(f"❌ ПОКРЫТИЕ {total:.1f}% - НУЖНО БОЛЬШЕ ТЕСТОВ (цель 90%)")
         print(f"{'=' * 60}")
