@@ -11,9 +11,9 @@ class Minimization:
         self.minterms = set(truth_table.get_minterms())
         self.maxterms = set(truth_table.get_maxterms())
 
-    # ==========================================================
+
     # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-    # ==========================================================
+
 
     def _int_to_binary(self, n, width):
         return tuple(int(x) for x in format(n, f'0{width}b'))
@@ -52,9 +52,9 @@ class Minimization:
 
         return True
 
-    # ==========================================================
+
     # СТРОКОВОЕ ПРЕДСТАВЛЕНИЕ
-    # ==========================================================
+
 
     def _term_to_string_dnf(self, term):
 
@@ -94,9 +94,9 @@ class Minimization:
 
         return '|'.join(literals)
 
-    # ==========================================================
+
     # ПОИСК ПРОСТЫХ ИМПЛИКАНТ
-    # ==========================================================
+
 
     def _find_prime_implicants(self, terms):
 
@@ -140,9 +140,9 @@ class Minimization:
 
         return prime_implicants
 
-    # ==========================================================
+
     # ТАБЛИЦА ПОКРЫТИЯ
-    # ==========================================================
+
 
     def _build_cover_table(self, prime_implicants, minterms):
 
@@ -181,9 +181,9 @@ class Minimization:
 
         return essential
 
-    # ==========================================================
+
     # УПРОЩЕНИЕ
-    # ==========================================================
+
 
     def _simplify_dnf(self, terms):
 
@@ -211,9 +211,9 @@ class Minimization:
 
         return strings
 
-    # ==========================================================
+
     # РАСЧЕТНЫЙ МЕТОД ДНФ
-    # ==========================================================
+
 
     def minimize_dnf_calculus(self):
 
@@ -285,9 +285,9 @@ class Minimization:
 
         return result, stages
 
-    # ==========================================================
+
     # РАСЧЕТНО-ТАБЛИЧНЫЙ МЕТОД ДНФ
-    # ==========================================================
+
 
     def minimize_dnf_table_method(self):
 
@@ -376,9 +376,9 @@ class Minimization:
 
         return result, stages, table_data
 
-    # ==========================================================
+
     # РАСЧЕТНЫЙ МЕТОД КНФ
-    # ==========================================================
+
 
     def minimize_cnf_calculus(self):
 
@@ -450,9 +450,9 @@ class Minimization:
 
         return result, stages
 
-    # ==========================================================
+
     # РАСЧЕТНО-ТАБЛИЧНЫЙ МЕТОД КНФ
-    # ==========================================================
+
 
     def minimize_cnf_table_method(self):
 
@@ -538,9 +538,7 @@ class Minimization:
 
         return result, stages, table_data
 
-    # ==========================================================
-    # ВЫВОД
-    # ==========================================================
+
 
     def print_minimization_dnf_calculus(self):
 
